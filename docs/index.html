@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ohio LLC Discount Buys + Lookalikes</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --mute:#667085; --line:#e4e7ec;
+          --hot:#d92d20; --warm:#dc6803; --cold:#667085; --acc:#1d4ed8; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:18px 24px 6px; }
+  h1 { margin:0; font-size:20px; }
+  .sub { color:var(--mute); font-size:13px; margin-top:2px; }
+  .tabs { display:flex; gap:6px; padding:10px 24px 0; }
+  .tabs button { border:1px solid var(--line); border-bottom:none; border-radius:8px 8px 0 0; background:#eef0f3; padding:8px 14px; font:inherit; cursor:pointer; }
+  .tabs button.on { background:var(--card); font-weight:600; }
+  .tiles { display:flex; gap:12px; flex-wrap:wrap; padding:12px 24px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 16px; min-width:130px; }
+  .tile b { display:block; font-size:22px; font-variant-numeric:tabular-nums; }
+  .tile span { color:var(--mute); font-size:12px; }
+  .filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:6px 24px 12px; }
+  .filters input, .filters select, button { font:inherit; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .filters label { display:flex; gap:5px; align-items:center; color:var(--mute); }
+  button { cursor:pointer; } button.primary { background:var(--acc); color:#fff; border-color:var(--acc); }
+  .wrap { padding:0 24px 24px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); }
+  th, td { padding:7px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; white-space:nowrap; }
+  th { background:#f9fafb; font-size:12px; color:var(--mute); cursor:pointer; user-select:none; position:sticky; top:0; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td.wrapcell { white-space:normal; min-width:200px; max-width:380px; }
+  .Hot{color:var(--hot);font-weight:600} .Warm{color:var(--warm);font-weight:600} .Cold{color:var(--cold);font-weight:600}
+  .flag { display:inline-block; font-size:11px; background:#eef2ff; color:#3730a3; border-radius:6px; padding:1px 6px; margin:1px 2px 1px 0; }
+  .new { background:#ecfdf3; color:#067647; }
+  .pager { display:flex; gap:8px; align-items:center; padding:10px 24px; color:var(--mute); }
+  .status { padding:0 24px; color:var(--mute); font-size:12px; }
+  .status b.err { color:var(--hot); }
+  a { color:var(--acc); text-decoration:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ohio — LLC Discount Buys &amp; Lookalike Leads</h1>
+  <div class="sub" id="meta">Loading…</div>
+</header>
+<div class="status" id="status"></div>
+<div class="tabs">
+  <button data-tab="looks" class="on">Lookalike leads</button>
+  <button data-tab="hits">LLC buys under 50% of value</button>
+  <button data-tab="buyers">LLC buyers</button>
+</div>
+<div class="tiles" id="tiles"></div>
+<div class="filters">
+  <input id="q" type="search" placeholder="Search owner, buyer, address, parcel, ZIP…" size="34">
+  <select id="county"><option value="">All counties</option></select>
+  <select id="tier" class="looks-only"><option value="">All tiers</option><option>Hot</option><option>Warm</option><option>Cold</option></select>
+  <label class="looks-only"><input id="abs" type="checkbox"> Absentee</label>
+  <label class="looks-only"><input id="oos" type="checkbox"> Out of state</label>
+  <label class="looks-only"><input id="tenure" type="checkbox"> Long ownership</label>
+  <label class="hits-only">Min discount %<input id="disc" type="number" value="50" step="5" style="width:70px"></label>
+  <label class="hits-only"><input id="nosheriff" type="checkbox"> Hide sheriff / land bank sales</label>
+  <label class="buyers-only">Min buys<input id="minbuys" type="number" value="1" step="1" style="width:60px"></label>
+  <label><input id="new" type="checkbox"> New this run</label>
+  <button class="primary" id="csv">Download CSV (filtered)</button>
+  <span class="sub">Full files: <a href="ghl_lookalikes.csv" download>lookalikes (GHL)</a> ·
+    <a href="llc_discount_sales.csv" download>discount sales</a> · <a href="llc_buyers.csv" download>buyers</a></span>
+</div>
+<div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+<div class="pager"><button id="prev">‹ Prev</button><span id="pg"></span><button id="next">Next ›</button></div>
+<script>
+const $ = s => document.querySelector(s);
+const money = v => v == null || v === "" ? "" : "$" + Math.round(v).toLocaleString();
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const flags = (a, isNew) => (a || []).map(f => `<span class="flag">${esc(f)}</span>`).join("") + (isNew ? '<span class="flag new">new</span>' : "");
+const D = {looks: [], hits: [], buyers: []};
+let tab = "looks", page = 0, sortKey = null, sortDir = -1;
+const PER = 100;
+
+const COLS = {
+  looks: [
+    ["score", "Score", r => `<span class="${r.tier}">${r.score}</span>`, "num"],
+    ["owner", "Owner", r => esc(r.owner)],
+    ["address", "Property", r => `${esc(r.address)}<br><span class="sub">${esc(r.city)} ${esc(r.zip)} · ${esc(r.county)}</span>`],
+    ["mail_address", "Mailing", r => esc([r.mail_address, r.mail_city, r.mail_state, r.mail_zip].filter(Boolean).join(", "))],
+    ["market_value", "Value", r => money(r.market_value), "num"],
+    ["luc_desc", "Type", r => esc(r.luc_desc || r.luc) + (r.year_built ? ` · ${r.year_built}` : "") + (r.sqft ? ` · ${Math.round(r.sqft)} sf` : "")],
+    ["sale_date", "Last sale", r => esc(r.sale_date) + (r.sale_price ? `<br><span class="sub">${money(r.sale_price)}</span>` : "")],
+    ["flags", "Signals", r => flags(r.flags, r.is_new), "wrapcell"],
+    ["similar_to", "Looks like", r => esc(r.similar_to) + `<br><span class="sub">${esc(r.area)} · ${r.area_discount_buys} LLC discount buy(s)</span>`, "wrapcell"],
+    ["parcel", "Parcel", r => r.url ? `<a href="${esc(r.url)}" target="_blank">${esc(r.parcel)}</a>` : esc(r.parcel)],
+  ],
+  hits: [
+    ["sale_date", "Sold", r => esc(r.sale_date)],
+    ["discount_pct", "Discount", r => `<b>${r.discount_pct}%</b>`, "num"],
+    ["sale_price", "Price", r => money(r.sale_price), "num"],
+    ["market_value", "Market value", r => money(r.market_value) + (r.bundle_value ? `<br><span class="sub">bundle ${money(r.bundle_value)}</span>` : ""), "num"],
+    ["address", "Property", r => `${esc(r.address)}<br><span class="sub">${esc(r.city)} ${esc(r.zip)} · ${esc(r.county)}</span>`],
+    ["buyer", "LLC buyer", r => esc(r.buyer)],
+    ["seller", "Seller", r => esc(r.seller)],
+    ["luc_desc", "Type", r => esc(r.luc_desc || r.luc) + (r.year_built ? ` · ${r.year_built}` : "")],
+    ["flags", "Notes", r => esc(r.deed_type) + " " + flags(r.flags, r.is_new), "wrapcell"],
+    ["parcel", "Parcel", r => r.url ? `<a href="${esc(r.url)}" target="_blank">${esc(r.parcel)}</a>` : esc(r.parcel)],
+  ],
+  buyers: [
+    ["purchases", "Discount buys", r => r.purchases, "num"],
+    ["buyer", "LLC", r => esc(r.buyer)],
+    ["total_spent", "Spent", r => money(r.total_spent), "num"],
+    ["avg_price_to_value", "Avg price/value", r => r.avg_price_to_value == null ? "" : Math.round(r.avg_price_to_value * 100) + "%", "num"],
+    ["counties", "Counties", r => esc(r.counties.join(", "))],
+    ["last_buy", "Last buy", r => esc(r.last_buy)],
+    ["mail_address", "Mailing address", r => esc([r.mail_address, r.mail_city, r.mail_state, r.mail_zip].filter(Boolean).join(", "))],
+    ["properties", "Properties", r => esc(r.properties.join(" | ")), "wrapcell"],
+  ],
+};
+
+function filtered() {
+  const q = $("#q").value.trim().toUpperCase(), c = $("#county").value, onlyNew = $("#new").checked;
+  let rows = D[tab].filter(r => {
+    if (c && !(r.county === c || (r.counties || []).includes(c))) return false;
+    if (q && !JSON.stringify(r).toUpperCase().includes(q)) return false;
+    if (tab === "looks") {
+      if ($("#tier").value && r.tier !== $("#tier").value) return false;
+      if ($("#abs").checked && !r.flags.includes("absentee")) return false;
+      if ($("#oos").checked && !r.flags.includes("out of state")) return false;
+      if ($("#tenure").checked && !r.flags.some(f => f.startsWith("owned"))) return false;
+      if (onlyNew && !r.is_new) return false;
+    } else if (tab === "hits") {
+      if (r.discount_pct < (+$("#disc").value || 0)) return false;
+      if ($("#nosheriff").checked && r.flags.some(f => /sheriff|land bank|government/.test(f))) return false;
+      if (onlyNew && !r.is_new) return false;
+    } else if (r.purchases < (+$("#minbuys").value || 1)) return false;
+    return true;
+  });
+  if (sortKey) rows = rows.slice().sort((a, b) => {
+    const x = a[sortKey], y = b[sortKey];
+    return (typeof x === "number" || typeof y === "number" ? (x || 0) - (y || 0) : String(x || "").localeCompare(String(y || ""))) * sortDir;
+  });
+  return rows;
+}
+
+function render() {
+  document.querySelectorAll(".looks-only").forEach(e => e.style.display = tab === "looks" ? "" : "none");
+  document.querySelectorAll(".hits-only").forEach(e => e.style.display = tab === "hits" ? "" : "none");
+  document.querySelectorAll(".buyers-only").forEach(e => e.style.display = tab === "buyers" ? "" : "none");
+  const rows = filtered(), cols = COLS[tab];
+  $("#th").innerHTML = "<tr>" + cols.map(([k, l]) => `<th data-k="${k}">${l}${sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
+  const pages = Math.max(1, Math.ceil(rows.length / PER)); page = Math.min(page, pages - 1);
+  $("#tb").innerHTML = rows.slice(page * PER, page * PER + PER).map(r =>
+    "<tr>" + cols.map(([, , f, cls]) => `<td class="${cls || ""}">${f(r)}</td>`).join("") + "</tr>").join("")
+    || `<tr><td colspan="${cols.length}" class="sub">No records match.</td></tr>`;
+  $("#pg").textContent = `${rows.length.toLocaleString()} rows · page ${page + 1} of ${pages}`;
+  const t = tab === "looks"
+    ? [["Lookalike leads", rows.length], ["Hot", rows.filter(r => r.tier === "Hot").length], ["Absentee", rows.filter(r => r.flags.includes("absentee")).length], ["New this run", rows.filter(r => r.is_new).length]]
+    : tab === "hits"
+    ? [["LLC discount buys", rows.length], ["Avg discount", rows.length ? Math.round(rows.reduce((s, r) => s + r.discount_pct, 0) / rows.length) + "%" : "–"], ["Equity bought", money(rows.reduce((s, r) => s + (r.equity_gap || 0), 0))], ["New this run", rows.filter(r => r.is_new).length]]
+    : [["LLC buyers", rows.length], ["Repeat buyers (2+)", rows.filter(r => r.purchases > 1).length], ["With mailing address", rows.filter(r => r.mail_address).length]];
+  $("#tiles").innerHTML = t.map(([l, v]) => `<div class="tile"><b>${typeof v === "number" ? v.toLocaleString() : v}</b><span>${l}</span></div>`).join("");
+}
+
+function toCSV() {
+  const rows = filtered();
+  if (!rows.length) return;
+  const keys = Object.keys(rows[0]).filter(k => !["key", "url"].includes(k));
+  const cell = v => { v = Array.isArray(v) ? v.join("; ") : (v ?? ""); v = String(v); return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  const csv = [keys.join(","), ...rows.map(r => keys.map(k => cell(r[k])).join(","))].join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], {type: "text/csv"}));
+  a.download = `${tab}_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+}
+
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  tab = b.dataset.tab; page = 0; sortKey = null; render();
+});
+$("#th").onclick = e => { const k = e.target.dataset.k; if (!k) return; sortDir = sortKey === k ? -sortDir : -1; sortKey = k; render(); };
+document.querySelectorAll(".filters input, .filters select").forEach(el => el.oninput = () => { page = 0; render(); });
+$("#prev").onclick = () => { page = Math.max(0, page - 1); render(); };
+$("#next").onclick = () => { page++; render(); };
+$("#csv").onclick = toCSV;
+
+Promise.all(["lookalikes.json", "llc_discount_sales.json", "llc_buyers.json"].map(f =>
+  fetch(f + "?v=" + Date.now()).then(r => r.ok ? r.json() : {meta: {}, records: []}).catch(() => ({meta: {}, records: []}))))
+.then(([l, h, b]) => {
+  D.looks = l.records; D.hits = h.records; D.buyers = b.records;
+  const m = h.meta || {};
+  $("#meta").textContent = m.updated
+    ? `Updated ${m.updated} · sales since ${m.window_start} · LLC buyer paid under ${Math.round((m.max_price_to_value || .5) * 100)}% of county market value`
+    : "No data yet — the first run hasn't finished.";
+  const cs = m.counties || {};
+  $("#status").innerHTML = Object.entries(cs).map(([k, v]) =>
+    v.status === "ok" ? `${k}: ${(v.hits || 0)} buys / ${(v.lookalikes || 0)} lookalikes`
+    : v.status === "error" ? `<b class="err">${k}: error</b> (showing last good run)`
+    : `${k}: ${esc(v.status)}`).join(" · ");
+  Object.keys(cs).filter(k => cs[k].status !== "disabled").forEach(k => $("#county").insertAdjacentHTML("beforeend", `<option>${k}</option>`));
+  render();
+});
+</script>
+</body>
+</html>

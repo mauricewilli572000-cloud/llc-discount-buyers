@@ -1,0 +1,62 @@
+name: LLC Discount Buyers + Lookalikes
+
+on:
+  schedule:
+    # Mondays ~7:12 AM Eastern. County sales files update weekly to monthly.
+    - cron: "12 12 * * 1"
+  workflow_dispatch:
+    inputs:
+      county:
+        description: "Only this county (franklin, cuyahoga, hamilton, summit). Blank = all."
+        type: string
+        default: ""
+      discover:
+        description: "Print each county's real column names (for fixing a county with 0 results)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: llc-discount-buyers
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Discover columns
+        if: ${{ inputs.discover }}
+        run: python discover.py ${{ inputs.county }}
+
+      - name: Run pipeline
+        if: ${{ !inputs.discover }}
+        run: python run_pipeline.py ${{ inputs.county && format('--county {0}', inputs.county) || '' }}
+
+      - name: Commit results
+        if: ${{ !inputs.discover }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ docs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "LLC discount buyers: $(date -u +%Y-%m-%d)"
+            git pull --rebase
+            git push
+          fi
