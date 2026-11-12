@@ -1,1 +1,4 @@
-{}
+{
+ "hamilton_tax": {"mail_address": "mailing_address_1", "mail_csz": "mailing_address_2"},
+ "hamilton_building": {"sqft": "LIVE_FSQFT"}
+}

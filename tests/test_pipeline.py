@@ -287,3 +287,78 @@ def test_run_pipeline_end_to_end(tmp_path, monkeypatch):
     # second run: nothing new, date_added kept
     assert run_pipeline.main([]) == 0
     assert json.loads(config.HITS_JSON.read_text())["meta"]["new_hits"] == 0
+
+
+# ---------------------------------------------------------------- real layouts (from discover.py, Nov 2026)
+CUY_REAL = ['ObjectID', 'parcel_id', 'myplaceppn', 'book_page', 'parcel_year', 'parcel_owner', 'second_owner',
+            'grantor', 'grantee', 'parcel_addr', 'parcel_predir', 'parcel_street', 'parcel_suffix', 'parcel_unit',
+            'parcel_city', 'parcel_zip', 'par_addr_all', 'mail_name', 'mail_addr_street', 'mail_unit_no',
+            'mail_city', 'mail_state', 'mail_zip', 'mail_country', 'last_transfer_date', 'last_sales_amount',
+            'tax_luc', 'tax_luc_description', 'ext_luc', 'property_class', 'prop_class_desc', 'neighborhood_code',
+            'certified_tax_total', 'gross_certified_total', 'tax_market_total', 'homestead_flag',
+            'total_res_liv_area', 'max_age']
+
+
+def test_cuyahoga_real_columns():
+    cols = fields.detect(CUY_REAL, "cuyahoga_taxparcel")
+    assert cols["zip"] == "parcel_zip" and cols["city"] == "parcel_city" and cols["luc"] == "tax_luc"
+    assert cols["mail_address"] == "mail_addr_street" and cols["sqft"] == "total_res_liv_area"
+    assert cols["sale_date"] == "last_transfer_date" and cols["buyer"] == "grantee"
+
+
+HAM_TAX = ['parcel_number', '2_5_flag', 'homestead_flag', 'book', 'page', 'property_id', 'mltown', 'prop_class_code',
+           'class_description', 'appraisal_area', 'area_description', 'owner_name_1', 'owner_name_2',
+           'owner_address_1', 'owner_address_2', 'owner_city', 'owner_state', 'owner_zip', 'location_house_number',
+           'location_street_direction', 'location_street_name', 'location_street_suffix', 'location_city',
+           'location_state', 'location_zip', 'mailing_name_1', 'mailing_name_2', 'mailing_address_1',
+           'mailing_address_2', 'mailing_city', 'mailing_state', 'mailing_zip', 'transfer_date', 'sale_amount',
+           'num_parcels', 'sale_type', 'previous_owner_name_1', 'market_land_value', 'market_impr_value',
+           'total_market_value']
+
+
+def test_hamilton_real_layout(tmp_path, monkeypatch):
+    ov = tmp_path / "ov.json"
+    ov.write_text((config.ROOT / "data" / "field_overrides.json").read_text())
+    monkeypatch.setattr(config, "FIELD_OVERRIDES", ov)
+
+    def xlsx(name, header, rows):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(header)
+        for r in rows:
+            ws.append(r)
+        wb.save(tmp_path / name)
+        return tmp_path / name
+
+    def tax_row(pid, owner, no, mail_no, sold, price, value, mail_state="OH"):
+        row = dict.fromkeys(HAM_TAX)
+        row.update({"parcel_number": pid, "homestead_flag": "N", "prop_class_code": 510,
+                    "class_description": "SINGLE FAMILY DWLG", "appraisal_area": "00100", "owner_name_1": owner,
+                    "owner_address_1": f"{mail_no} SUSSEX AVE", "location_house_number": no,
+                    "location_street_name": "SUSSEX", "location_street_suffix": "AVE",
+                    "mailing_address_1": f"{mail_no} SUSSEX AVE", "mailing_city": "CINCINNATI",
+                    "mailing_state": mail_state, "mailing_zip": 452301403, "transfer_date": sold,
+                    "sale_amount": price, "num_parcels": 1, "sale_type": "WD - Warranty Deed",
+                    "market_land_value": 28370, "market_impr_value": value - 28370, "total_market_value": value})
+        return [row[h] for h in HAM_TAX]
+
+    recent = dt.datetime.combine(TODAY - dt.timedelta(days=40), dt.time())
+    tax = xlsx("tax.xlsx", HAM_TAX, [
+        tax_row("0010001000100", "SUSSEX FLIPS LLC", 2327, 2327, recent, 60000, 236790),
+        tax_row("0010001000200", "JOSEVAS MARY JC", 2331, 900, dt.datetime(2001, 1, 2), 90000, 230000, "FL"),
+    ])
+    sales = xlsx("sales.xlsx", ["parcel_number", "use_code", "number_of_parcels", "owner_name_1", "date_of_sale",
+                                "instrument_type", "appraisal_area", "previous_owner", "sale_price"],
+                 [[10001000100, 510, 1, "SUSSEX FLIPS LLC", recent, "SH - Sheriff Deed", 100, "DOE JOHN", 60000]])
+    bldg = xlsx("bldg.xlsx", ["PARCELID", "LIVE_FSQFT", "SQFT", "YEARBUILT"],
+                [["0010001000100", 1314, None, 1996], ["0010001000200", 1300, None, 1994]])
+    ps = hamilton.load(tmp_path, "", files={"hamilton_sales": sales, "hamilton_tax": tax, "hamilton_building": bldg})
+    assert len(ps) == 2
+    p = {x.parcel: x for x in ps}["0010001000100"]
+    assert (p.address, p.zip, p.luc, p.market_value, p.sqft, p.year_built) == (
+        "2327 SUSSEX AVE", "45230", "510", 236790, 1314, 1996)
+    assert p.seller == "DOE JOHN"
+    hits, _ = analyze.find_hits(ps, TODAY)
+    assert len(hits) == 1 and "sheriff sale" in hits[0]["flags"]
+    looks = lookalike.find(ps, hits, TODAY)
+    assert [r["parcel"] for r in looks] == ["0010001000200"] and "out of state" in looks[0]["flags"]

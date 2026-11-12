@@ -9,7 +9,7 @@ import config
 from .. import build, fields
 from ..io import download, read_any
 from ..model import Parcel
-from ..normalize import clean, iso_date
+from ..normalize import address_key, clean, iso_date
 from . import pkey, residential_only
 
 log = logging.getLogger(__name__)
@@ -79,6 +79,8 @@ def load(raw_dir: Path, since: str, files: dict[str, Path] | None = None) -> lis
             p.year_built = b["year_built"] or p.year_built
             p.sqft = b["sqft"] or p.sqft
             p.beds = b["beds"] or p.beds
+        if not p.zip and p.mail_zip and address_key(p.mail_address) == address_key(p.address):
+            p.zip, p.city = p.mail_zip, p.city or p.mail_city    # file leaves site ZIP blank
         p.sale_date = iso_date(p.sale_date)
         p.url = config.HAMILTON_PARCEL_URL.format(parcel_digits=pkey(raw).zfill(12), year=year)
         out.append(p)
