@@ -1,0 +1,61 @@
+{
+ "updated": "2026-11-12",
+ "window_start": "2026-05-13",
+ "max_price_to_value": 0.5,
+ "counties": {
+  "Franklin": {
+   "status": "ok",
+   "parcels": 442241,
+   "value_factor": 1.0,
+   "lookalikes": 750,
+   "sales_in_window": 14679,
+   "llc_purchases": 3131,
+   "skipped_no_value": 171,
+   "skipped_nominal_price": 1433,
+   "hits": 184
+  },
+  "Cuyahoga": {
+   "status": "ok",
+   "parcels": 424031,
+   "value_factor": 1.0,
+   "lookalikes": 750,
+   "sales_in_window": 18522,
+   "llc_purchases": 4172,
+   "skipped_nominal_price": 1125,
+   "skipped_no_value": 26,
+   "hits": 189
+  },
+  "Hamilton": {
+   "status": "ok",
+   "parcels": 255173,
+   "value_factor": 1.0,
+   "lookalikes": 750,
+   "sales_in_window": 10062,
+   "llc_purchases": 1776,
+   "skipped_nominal_price": 676,
+   "skipped_bundle_unknown": 162,
+   "skipped_no_value": 9,
+   "hits": 47
+  },
+  "Summit": {
+   "status": "ok",
+   "parcels": 199583,
+   "value_factor": 1.0,
+   "lookalikes": 750,
+   "sales_in_window": 7933,
+   "llc_purchases": 1032,
+   "skipped_nominal_price": 296,
+   "skipped_no_value": 7,
+   "hits": 110
+  },
+  "Shelby": {
+   "status": "disabled",
+   "note": "No bulk sales/parcel download published; Auditor site is search-only."
+  }
+ },
+ "hits": 530,
+ "new_hits": 530,
+ "lookalikes": 3000,
+ "new_lookalikes": 3000,
+ "buyers": 365
+}
