@@ -12,10 +12,15 @@ def address(row: dict, cols: dict) -> str:
     a = clean(F.pick(row, cols, "address")).split(",")[0].strip()
     parts = [clean(F.pick(row, cols, k)) for k in ("addr_no", "addr_dir", "addr_street", "addr_suffix")]
     composed = " ".join(p for p in parts if p and p != "0")
-    # a one-line field like Summit's LOCATION is sometimes junk ('OW', 'ME'): prefer the parts then
-    if a and (re.search(r"\d", a) or not composed):
-        return a
-    return composed or a
+    # a one-line field like Summit's LOCATION is sometimes junk ('OW', '21'): prefer the parts then
+    if _looks_like_street(a) or not _looks_like_street(composed):
+        return a or composed
+    return composed
+
+
+def _looks_like_street(s: str) -> bool:
+    """'168 SW 31ST ST' yes; '21', 'OW', 'W 61 ST' (no house number) no."""
+    return bool(re.match(r"^\d+[A-Z]?\s+\S*[A-Z]", s or "", re.I))
 
 
 def site_city_zip(row: dict, cols: dict) -> tuple[str, str]:

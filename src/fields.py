@@ -71,7 +71,7 @@ RULES: dict[str, list[str]] = {
              "eq:municipality", "in:sitecity", "in:propertycity"],
     "zip": ["eq:locationzip", "eq:parcelzip", "eq:zipcode", "eq:zip", "eq:zipcd", "eq:parzip", "eq:sitezip", "eq:propertyzip",
             "eq:locationzip", "in:sitezip", "in:propertyzip", "in:parzip"],
-    "mail_address": ["eq:owneraddress1", "eq:mailaddrstreet", "eq:mailaddress", "eq:mailingaddress", "eq:taxmailingaddress",
+    "mail_address": ["eq:owneraddress1", "eq:mailaddrstreet", "eq:address1", "eq:mailaddress", "eq:mailingaddress", "eq:taxmailingaddress",
                      "eq:addr1", "eq:owneraddress", "eq:taxaddress", "eq:mailaddr1", "eq:mailingaddress1",
                      "eq:billingaddress", "in:mailingaddress", "in:mailaddress", "in:owneraddress",
                      "in:taxmailingaddr", "in:taxbilladdress"],

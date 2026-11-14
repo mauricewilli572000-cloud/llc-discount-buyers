@@ -392,3 +392,60 @@ def test_zillow_attach():
     data = {"Franklin|1": {"zestimate": 200000, "sqft": 900, "checked": "2026-11-14"}}
     assert zillow.attach(rows, data) == 1
     assert rows[0]["pct_of_zestimate"] == 25.0 and rows[0]["sqft"] == 900 and "zillow" not in rows[1]
+
+
+SUM_PARDAT = ['TAPE CREATE DATE', 'PARCEL', 'TAXYR', 'SEQ', 'ALT-ID', 'ADRNO', 'ADRADD', 'ADRDIR', 'ADRSTR', 'ADRSUF',
+              'NBHDP', 'NBHDS', 'CLASS', 'LUC', 'LUCM', 'LVU', 'TIEBACK', 'LANDISC', 'ACRES', 'STREET1', 'STREET2',
+              'TRAFFIC', 'TOP01', 'TOP02', 'UTIL1', 'UTIL2', 'UTIL3', 'CARDS', 'PARTIAL', 'BLDGROSD', 'BLDGROSV',
+              'MBD', 'MBLDV', 'NOTECD1', 'NOTECD2', 'NOTE1', 'NOTE2', 'DEACTIVATE', 'WEN', 'LOCATION', 'FRONTING',
+              'ZIPCD', 'ADRSUF2', 'USER1', 'USER2', 'USER3', 'USER4', 'USER9', 'CITY', 'Rental_Registration',
+              'UDATE1', 'UDATE2', 'UDATE3']
+
+
+def test_summit_real_layout(tmp_path, monkeypatch):
+    ov = tmp_path / "ov.json"
+    ov.write_text((config.ROOT / "data" / "field_overrides.json").read_text())
+    monkeypatch.setattr(config, "FIELD_OVERRIDES", ov)
+
+    def wcsv(name, header, rows):
+        path = tmp_path / name
+        with path.open("w", newline="") as f:
+            w = csv.writer(f, quoting=csv.QUOTE_ALL)
+            w.writerow(header)
+            w.writerows(rows)
+        return path
+
+    def pardat(pid, no, dirn, street, suf):
+        row = dict.fromkeys(SUM_PARDAT, "")
+        row.update({"TAPE CREATE DATE": "30-OCT-2026", "PARCEL": pid, "TAXYR": "2027", "SEQ": "0", "ADRNO": no,
+                    "ADRDIR": dirn, "ADRSTR": street, "ADRSUF": suf, "NBHDP": "30200", "CLASS": "R", "LUC": "510",
+                    "WEN": "SHED/DECK I", "LOCATION": "21", "ZIPCD": "12-OC", "USER2": "44203",
+                    "USER4": "07-OCT-19", "CITY": "                    ", "UDATE1": "BARBERTON"})
+        return [row[h] for h in SUM_PARDAT]
+
+    sold = d(45, "%d-%b-%Y").upper()
+    sales = wcsv("s.csv", ['TAPE CREATE DATE', 'PARCEL', 'TRANSNO', 'OLDOWN', 'OWN1', 'SALEDATE', 'PRICE', 'SALETYPE'],
+                 [["30-OCT-2026", "0100001", "1", "BALL DOUGLAS R", "MAGIC CITY HOMES LLC", sold, "40000", ""],
+                  ["30-OCT-2026", "0100002", "2", "X", "WAGNER THOMAS", "30-DEC-1999", "50000", ""]])
+    own = wcsv("o.csv", ['TAPE CREATE DATE', 'PARID', 'TAXYR', 'SEQ', 'OWNER1', 'OWNER2', 'ADDRESS_1', 'ADDRESS_2',
+                         'OWNER ZIPCD1', 'OWNER ZIPCD2', 'CITYNAME', 'STATECODE'],
+               [["30-OCT-2026", "0100001", "2027", "0", "MAGIC CITY HOMES LLC", "", "1 MAIN ST", "", "44308", "",
+                 "AKRON", "  "],
+                ["30-OCT-2026", "0100002", "2027", "0", "WAGNER THOMAS", "", "55 PALM AVE", "", "33101", "",
+                 "MIAMI", "FL"]])
+    asmt = wcsv("a.csv", ['TAPE CREATE DATE', 'PARCEL', 'TAXYR', 'SEQ', 'APRLAND', 'APRBLDG', 'LUC'],
+                [["30-OCT-2026", "0100001", "2027", "0", "20000", "80000", "510"],
+                 ["30-OCT-2026", "0100002", "2027", "0", "20000", "75000", "510"]])
+    par = wcsv("p.csv", SUM_PARDAT, [pardat("0100001", "168", "SW", "31ST", "ST"),
+                                    pardat("0100002", "176", "SW", "31ST", "ST")])
+    ps = summit.load(tmp_path, "", files={"summit_sales": sales, "summit_owndat": own, "summit_asmt": asmt,
+                                          "summit_pardat": par})
+    p = {x.parcel: x for x in ps}
+    a, b = p["0100001"], p["0100002"]
+    assert (a.address, a.zip, a.city, a.buyer, a.market_value) == (
+        "168 SW 31ST ST", "44203", "BARBERTON", "MAGIC CITY HOMES LLC", 100000)
+    assert (a.mail_address, a.mail_state, b.mail_state) == ("1 MAIN ST", "OH", "FL")
+    hits, _ = analyze.find_hits(ps, TODAY)
+    assert len(hits) == 1
+    looks = lookalike.find(ps, hits, TODAY)
+    assert [r["parcel"] for r in looks] == ["0100002"] and "out of state" in looks[0]["flags"]

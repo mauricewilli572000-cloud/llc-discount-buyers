@@ -57,21 +57,50 @@ def _by_parcel(path: Path, source: str, order_field: str) -> dict[str, tuple[dic
     return {k: (r, cols) for k, (_, r) in best.items()}
 
 
+_ZIP_RE = re.compile(r"^4[345]\d{3}$")
+SUMMIT_PLACES = {
+    "AKRON", "BARBERTON", "BATH", "BOSTON HEIGHTS", "CLINTON", "COPLEY", "COVENTRY", "CUYAHOGA FALLS",
+    "FAIRLAWN", "GREEN", "HUDSON", "LAKEMORE", "MACEDONIA", "MOGADORE", "MUNROE FALLS", "NEW FRANKLIN",
+    "NORTHFIELD", "NORTHFIELD CENTER", "NORTON", "PENINSULA", "REMINDERVILLE", "RICHFIELD", "SAGAMORE HILLS",
+    "SILVER LAKE", "SPRINGFIELD", "STOW", "TALLMADGE", "TWINSBURG", "UNIONTOWN", "SAGAMORE HLS", "CUY FALLS",
+}
+
+
+def shifted_zip_city(row: dict, cols: dict, known_cities: set[str]) -> tuple[str, str]:
+    """PARDAT's trailing columns are shifted (ZIP lands under USER2, city under UDATE1): scan for them."""
+    keys = list(row.keys())
+    start = keys.index(cols["address"]) if cols.get("address") in keys else len(keys) // 2
+    z = c = ""
+    for k in keys[start:]:
+        v = clean(row.get(k)).upper()
+        if not z and _ZIP_RE.match(v):
+            z = v
+        elif not c and v in known_cities:
+            c = v
+    return z, c
+
+
 def load(raw_dir: Path, since: str, files: dict[str, Path] | None = None) -> list[Parcel]:
     files = files or sources(raw_dir)
     sales = _by_parcel(files["summit_sales"], "summit_sales", "sale_date")
     owners = _by_parcel(files["summit_owndat"], "summit_owndat", "tax_year")
     asmt = _by_parcel(files["summit_asmt"], "summit_asmt", "tax_year")
+    known_cities = SUMMIT_PLACES | ({clean(fields.pick(r, c, "city")).upper() for r, c in owners.values()} - {""})
     out: list[Parcel] = []
     for pid, (r, cols) in _by_parcel(files["summit_pardat"], "summit_pardat", "tax_year").items():
         p = Parcel(county=COUNTY, parcel=clean(fields.pick(r, cols, "parcel")).zfill(7),
                    **build.parcel_fields(r, cols))
+        if not p.zip or not p.city:
+            z, c = shifted_zip_city(r, cols, known_cities)
+            p.zip, p.city = p.zip or z, p.city or c
         if pid in owners:
             orow, ocols = owners[pid]
             of = build.parcel_fields(orow, ocols)
             # OWNDAT's street / city columns are the owner's MAILING address
             of["mail_address"] = of["mail_address"] or of["address"]
             of["mail_city"] = of["mail_city"] or of["city"]
+            if not of["mail_state"] and re.match(r"4[345]\d{3}$", of["mail_zip"] or ""):
+                of["mail_state"] = "OH"                 # STATECODE is blank for Ohio owners
             for k in ("owner", "owner2", "mail_address", "mail_city", "mail_state", "mail_zip", "homestead"):
                 if of[k] not in (None, ""):
                     setattr(p, k, of[k])
