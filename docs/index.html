@@ -78,7 +78,8 @@ let tab = "looks", page = 0, sortKey = null, sortDir = -1;
 const PER = 100;
 
 const zest = r => { const z = r.zillow; if (!z || !z.zestimate) return '<span class="sub">–</span>';
-  return `${money(z.zestimate)}<br><span class="sub">${money(z.zestimate_low)}–${money(z.zestimate_high)}${z.beds ? ` · ${z.beds}bd/${z.baths}ba` : ""}</span>`; };
+  return `<span style="white-space:normal;display:inline-block;max-width:260px">${money(z.zestimate)}<br><span class="sub">${money(z.zestimate_low)}–${money(z.zestimate_high)}${z.beds ? ` · ${z.beds}bd/${z.baths}ba` : ""}</span>`
+    + (z.comp ? `<br><span class="sub" title="Zillow sold comp">comp: ${esc(z.comp)}</span>` : "") + "</span>"; };
 const COLS = {
   looks: [
     ["score", "Score", r => `<span class="${r.tier}">${r.score}</span>`, "num"],
