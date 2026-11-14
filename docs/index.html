@@ -61,6 +61,7 @@
   <label class="hits-only"><input id="nosheriff" type="checkbox"> Hide sheriff / land bank sales</label>
   <label class="buyers-only">Min buys<input id="minbuys" type="number" value="1" step="1" style="width:60px"></label>
   <label><input id="new" type="checkbox"> New this run</label>
+  <label class="looks-only hits-only2"><input id="zil" type="checkbox"> Zillow checked</label>
   <button class="primary" id="csv">Download CSV (filtered)</button>
   <span class="sub">Full files: <a href="ghl_lookalikes.csv" download>lookalikes (GHL)</a> ·
     <a href="llc_discount_sales.csv" download>discount sales</a> · <a href="llc_buyers.csv" download>buyers</a></span>
@@ -76,13 +77,16 @@ const D = {looks: [], hits: [], buyers: []};
 let tab = "looks", page = 0, sortKey = null, sortDir = -1;
 const PER = 100;
 
+const zest = r => { const z = r.zillow; if (!z || !z.zestimate) return '<span class="sub">–</span>';
+  return `${money(z.zestimate)}<br><span class="sub">${money(z.zestimate_low)}–${money(z.zestimate_high)}${z.beds ? ` · ${z.beds}bd/${z.baths}ba` : ""}</span>`; };
 const COLS = {
   looks: [
     ["score", "Score", r => `<span class="${r.tier}">${r.score}</span>`, "num"],
     ["owner", "Owner", r => esc(r.owner)],
     ["address", "Property", r => `${esc(r.address)}<br><span class="sub">${esc(r.city)} ${esc(r.zip)} · ${esc(r.county)}</span>`],
     ["mail_address", "Mailing", r => esc([r.mail_address, r.mail_city, r.mail_state, r.mail_zip].filter(Boolean).join(", "))],
-    ["market_value", "Value", r => money(r.market_value), "num"],
+    ["market_value", "County value", r => money(r.market_value), "num"],
+    ["zillow", "Zestimate", zest, "num"],
     ["luc_desc", "Type", r => esc(r.luc_desc || r.luc) + (r.year_built ? ` · ${r.year_built}` : "") + (r.sqft ? ` · ${Math.round(r.sqft)} sf` : "")],
     ["sale_date", "Last sale", r => esc(r.sale_date) + (r.sale_price ? `<br><span class="sub">${money(r.sale_price)}</span>` : "")],
     ["flags", "Signals", r => flags(r.flags, r.is_new), "wrapcell"],
@@ -94,6 +98,7 @@ const COLS = {
     ["discount_pct", "Discount", r => `<b>${r.discount_pct}%</b>`, "num"],
     ["sale_price", "Price", r => money(r.sale_price), "num"],
     ["market_value", "Market value", r => money(r.market_value) + (r.bundle_value ? `<br><span class="sub">bundle ${money(r.bundle_value)}</span>` : ""), "num"],
+    ["zillow", "Zestimate", r => zest(r) + (r.pct_of_zestimate ? `<br><b>paid ${Math.round(r.pct_of_zestimate)}%</b>` : ""), "num"],
     ["address", "Property", r => `${esc(r.address)}<br><span class="sub">${esc(r.city)} ${esc(r.zip)} · ${esc(r.county)}</span>`],
     ["buyer", "LLC buyer", r => esc(r.buyer)],
     ["seller", "Seller", r => esc(r.seller)],
@@ -118,6 +123,7 @@ function filtered() {
   let rows = D[tab].filter(r => {
     if (c && !(r.county === c || (r.counties || []).includes(c))) return false;
     if (q && !JSON.stringify(r).toUpperCase().includes(q)) return false;
+    if (tab !== "buyers" && $("#zil").checked && !r.zillow) return false;
     if (tab === "looks") {
       if ($("#tier").value && r.tier !== $("#tier").value) return false;
       if ($("#abs").checked && !r.flags.includes("absentee")) return false;
@@ -132,7 +138,8 @@ function filtered() {
     return true;
   });
   if (sortKey) rows = rows.slice().sort((a, b) => {
-    const x = a[sortKey], y = b[sortKey];
+    const v = (r, k) => k === "zillow" ? (r.zillow ? r.zillow.zestimate : null) : r[k];
+    const x = v(a, sortKey), y = v(b, sortKey);
     return (typeof x === "number" || typeof y === "number" ? (x || 0) - (y || 0) : String(x || "").localeCompare(String(y || ""))) * sortDir;
   });
   return rows;
@@ -142,6 +149,7 @@ function render() {
   document.querySelectorAll(".looks-only").forEach(e => e.style.display = tab === "looks" ? "" : "none");
   document.querySelectorAll(".hits-only").forEach(e => e.style.display = tab === "hits" ? "" : "none");
   document.querySelectorAll(".buyers-only").forEach(e => e.style.display = tab === "buyers" ? "" : "none");
+  document.querySelectorAll(".hits-only2").forEach(e => e.style.display = tab === "buyers" ? "none" : "");
   const rows = filtered(), cols = COLS[tab];
   $("#th").innerHTML = "<tr>" + cols.map(([k, l]) => `<th data-k="${k}">${l}${sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
   const pages = Math.max(1, Math.ceil(rows.length / PER)); page = Math.min(page, pages - 1);

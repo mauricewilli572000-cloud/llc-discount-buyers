@@ -362,3 +362,33 @@ def test_hamilton_real_layout(tmp_path, monkeypatch):
     assert len(hits) == 1 and "sheriff sale" in hits[0]["flags"]
     looks = lookalike.find(ps, hits, TODAY)
     assert [r["parcel"] for r in looks] == ["0010001000200"] and "out of state" in looks[0]["flags"]
+
+
+# ---------------------------------------------------------------- location fill, junk addresses, Zillow
+def test_location_fill_from_owner_and_neighbors():
+    from src import location
+    occ = mk(parcel="1", address="100 ELM ST", zip="", city="", mail_address="100 ELM ST", mail_zip="44306",
+             mail_city="AKRON")
+    near = mk(parcel="2", address="112 ELM ST", zip="", city="", mail_address="9 FAR RD", mail_zip="90210")
+    far_away = mk(parcel="3", address="9000 ELM ST", zip="", city="")
+    other = mk(parcel="4", address="5 OAK ST", zip="", city="")
+    assert location.fill([occ, near, far_away, other]) == 2
+    assert (occ.zip, occ.city, near.zip, near.city) == ("44306", "AKRON", "44306", "AKRON")
+    assert far_away.zip == "" and other.zip == ""
+
+
+def test_junk_one_line_address_uses_parts():
+    from src import build
+    cols = {"address": "LOCATION", "addr_no": "ADRNO", "addr_street": "ADRSTR", "addr_suffix": "ADRSUF"}
+    assert build.address({"LOCATION": "OW", "ADRNO": "189", "ADRSTR": "PEMBROKE", "ADRSUF": "RD"}, cols) == \
+        "189 PEMBROKE RD"
+    assert build.address({"LOCATION": "12 MAIN ST", "ADRNO": "12"}, cols) == "12 MAIN ST"
+
+
+def test_zillow_attach():
+    from src import zillow
+    rows = [{"county": "Franklin", "parcel": "1", "sale_price": 50000, "discount_pct": 60.0, "sqft": None},
+            {"county": "Franklin", "parcel": "2"}]
+    data = {"Franklin|1": {"zestimate": 200000, "sqft": 900, "checked": "2026-11-14"}}
+    assert zillow.attach(rows, data) == 1
+    assert rows[0]["pct_of_zestimate"] == 25.0 and rows[0]["sqft"] == 900 and "zillow" not in rows[1]

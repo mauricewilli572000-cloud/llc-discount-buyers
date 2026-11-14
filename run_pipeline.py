@@ -22,7 +22,7 @@ import shutil
 import sys
 
 import config
-from src import analyze, export, lookalike
+from src import analyze, export, location, lookalike, zillow
 
 log = logging.getLogger("llc_discount_buyers")
 
@@ -61,6 +61,9 @@ def main(argv=None) -> int:
         try:
             mod = importlib.import_module(f"src.counties.{key}")
             parcels = mod.load(raw, since)
+            filled = location.fill(parcels)
+            if filled:
+                log.info("%s: filled city/ZIP for %d parcels", label, filled)
             factor = analyze.calibrate_values(parcels, label)
             hits, stats = analyze.find_hits(parcels, today)
             looks = lookalike.find(parcels, hits, today)
@@ -79,6 +82,8 @@ def main(argv=None) -> int:
                 shutil.rmtree(raw, ignore_errors=True)
 
     t = today.isoformat()
+    zdata = zillow.load()
+    z_hits, z_looks = zillow.attach(all_hits, zdata), zillow.attach(all_looks, zdata)
     new_hits = export.stamp(all_hits, config.HITS_JSON, t)
     new_looks = export.stamp(all_looks, config.LOOKALIKES_JSON, t)
     all_hits.sort(key=lambda h: (h["sale_date"], h["discount_pct"]), reverse=True)
@@ -86,7 +91,8 @@ def main(argv=None) -> int:
     buyer_rows = analyze.buyers(all_hits)
     meta = {"updated": t, "window_start": since, "max_price_to_value": config.MAX_PRICE_TO_VALUE,
             "counties": county_meta, "hits": len(all_hits), "new_hits": new_hits,
-            "lookalikes": len(all_looks), "new_lookalikes": new_looks, "buyers": len(buyer_rows)}
+            "lookalikes": len(all_looks), "new_lookalikes": new_looks, "buyers": len(buyer_rows),
+            "zillow_checked": z_hits + z_looks}
     export.write_json(config.HITS_JSON, all_hits, meta)
     export.write_json(config.LOOKALIKES_JSON, all_looks, meta)
     export.write_json(config.BUYERS_JSON, buyer_rows, meta)

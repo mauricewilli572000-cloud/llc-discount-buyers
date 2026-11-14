@@ -60,3 +60,11 @@ python run_pipeline.py                  # all counties
 python run_pipeline.py --county summit  # one county
 python -m pytest -q
 ```
+
+## Zillow data
+
+GitHub can't reach Zillow, so lookups are done through the Zillow connector in a Claude chat and
+saved to `data/zillow.json` (keyed `County|parcel`: Zestimate, range, beds/baths/sq ft, a sold comp).
+Every run re-attaches them, and the dashboard shows a Zestimate column plus "paid X% of Zestimate"
+on discount sales. After adding lookups, `python merge_zillow.py` updates the dashboard files
+immediately without re-downloading county data.

@@ -1,0 +1,116 @@
+{
+ "Cuyahoga|00808066": {
+  "address": "3035 W 14th St, Cleveland, OH 44113",
+  "zestimate": 178000,
+  "zestimate_low": 117000,
+  "zestimate_high": 263000,
+  "beds": 6,
+  "baths": 2,
+  "sqft": 3510,
+  "year_built": 1900,
+  "comp": "3020 W 47th St: 6bd/3ba 2224 sf sold $210,000 8 days ago",
+  "checked": "2026-11-14"
+ },
+ "Franklin|241-000505-00": {
+  "address": "8889 Canoe Dr, Galloway, OH 43119",
+  "zestimate": 252300,
+  "zestimate_low": 240000,
+  "zestimate_high": 265000,
+  "beds": 3,
+  "baths": 1,
+  "sqft": 984,
+  "year_built": 1982,
+  "comp": "375 Darby Ct: 3bd/1ba 956 sf sold $272,000 ~3 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Franklin|010-102941-00": {
+  "address": "3583 Lieb St, Columbus, OH 43214",
+  "zestimate": 396500,
+  "zestimate_low": 349000,
+  "zestimate_high": 444000,
+  "beds": 3,
+  "baths": 2,
+  "sqft": 1288,
+  "year_built": 1963,
+  "comp": "1015 Woodmere Rd: 3bd/2ba 1394 sf sold $415,000 10 days ago",
+  "checked": "2026-11-14"
+ },
+ "Franklin|010-004293-00": {
+  "address": "645 Carpenter St, Columbus, OH 43205",
+  "zestimate": 203500,
+  "zestimate_low": 161000,
+  "zestimate_high": 252000,
+  "beds": 3,
+  "baths": 2,
+  "sqft": 756,
+  "year_built": 1910,
+  "comp": "617-619 Oakwood Ave: 3bd/2ba 800 sf sold $175,000 ~1 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Cuyahoga|86127028": {
+  "address": "5953 Mayflower Ave, Mayfield Heights, OH 44124",
+  "zestimate": 271700,
+  "zestimate_low": 242000,
+  "zestimate_high": 299000,
+  "beds": 3,
+  "baths": 1,
+  "sqft": 1226,
+  "year_built": 1971,
+  "comp": "5978 Mayflower Ave: 3bd/2ba 1681 sf sold $250,000 8 days ago",
+  "checked": "2026-11-14"
+ },
+ "Franklin|010-099938-00": {
+  "address": "851 Bricker Blvd, Columbus, OH 43221",
+  "zestimate": 232100,
+  "zestimate_low": 190000,
+  "zestimate_high": 279000,
+  "beds": 4,
+  "baths": 2,
+  "sqft": 884,
+  "year_built": 1959,
+  "comp": "1008 Manor Ln: 2bd/2ba 1100 sf sold $228,000 ~4 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Franklin|240-001147-00": {
+  "address": "61 Buena Vista Ave, Columbus, OH 43228",
+  "zestimate": 140500,
+  "zestimate_low": 119000,
+  "zestimate_high": 166000,
+  "beds": null,
+  "baths": null,
+  "sqft": null,
+  "year_built": null,
+  "comp": "",
+  "checked": "2026-11-14"
+ },
+ "Franklin|230-002366-00": {
+  "address": "5638 Bellview Dr, Grove City, OH 43123",
+  "zestimate": 149300,
+  "zestimate_low": 124000,
+  "zestimate_high": 181000,
+  "beds": 2,
+  "baths": 1,
+  "sqft": 784,
+  "year_built": 1935,
+  "comp": "6971 London Groveport Rd: 3bd/1ba 816 sf sold $177,000 ~2 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Franklin|010-113253-00": {
+  "address": "2784 S High St, Columbus, OH 43207",
+  "zestimate": null,
+  "note": "Zillow shows no Zestimate for this home",
+  "checked": "2026-11-14"
+ },
+ "Franklin|010-048265-00": {
+  "address": "276 E Morrill Ave, Columbus, OH 43207",
+  "zestimate": null,
+  "note": "Zillow shows no Zestimate for this home",
+  "checked": "2026-11-14"
+ },
+ "Franklin|274-012450-00": {
+  "address": "5296 Estuary Ln 5A, Dublin, OH 43016",
+  "zestimate": null,
+  "note": "Zillow could not find this address",
+  "checked": "2026-11-14"
+ }
+}

@@ -55,7 +55,8 @@ def split_name(owner: str) -> tuple[str, str]:
 
 HIT_COLUMNS = ["County", "Parcel", "Property Address", "City", "Zip", "Land Use", "Buyer (LLC)", "Seller",
                "Sale Date", "Sale Price", "Market Value", "Price/Value", "Discount %", "Equity Gap",
-               "Deed Type", "Flags", "Buyer Mailing", "Year Built", "Sq Ft", "Beds", "Date Added", "Link"]
+               "Deed Type", "Flags", "Buyer Mailing", "Year Built", "Sq Ft", "Beds", "Zestimate",
+               "% of Zestimate", "Zillow Checked", "Date Added", "Link"]
 
 
 def hits_csv(path: Path, rows: list[dict]) -> None:
@@ -69,14 +70,15 @@ def hits_csv(path: Path, rows: list[dict]) -> None:
                         h["luc_desc"] or h["luc"], h["buyer"], h["seller"], h["sale_date"],
                         _money(h["sale_price"]), _money(h["market_value"]), h["price_to_value"],
                         h["discount_pct"], _money(h["equity_gap"]), h["deed_type"], "; ".join(h["flags"]),
-                        mail, h["year_built"] or "", _money(h["sqft"]), h["beds"] or "", h["date_added"],
-                        h["url"]])
+                        mail, h["year_built"] or "", _money(h["sqft"]), h["beds"] or "",
+                        _money((h.get("zillow") or {}).get("zestimate")), h.get("pct_of_zestimate") or "",
+                        (h.get("zillow") or {}).get("checked", ""), h["date_added"], h["url"]])
 
 
 GHL_COLUMNS = ["First Name", "Last Name", "Full Name", "Owner 2", "Address", "City", "State", "Postal Code",
                "Property Address", "Property City", "Property Zip", "County", "Lead Type", "Land Use",
                "Market Value", "Year Built", "Sq Ft", "Last Sale Date", "Score", "Tier", "Signals",
-               "Similar To", "Parcel", "Date Added", "Tags"]
+               "Similar To", "Zestimate", "Zestimate Range", "Parcel", "Date Added", "Tags"]
 
 
 def ghl_csv(path: Path, rows: list[dict]) -> None:
@@ -85,6 +87,7 @@ def ghl_csv(path: Path, rows: list[dict]) -> None:
         w.writerow(GHL_COLUMNS)
         for r in rows:
             first, last = split_name(r["owner"])
+            z = r.get("zillow") or {}
             mailing = bool(r["mail_address"])
             tags = ["llc lookalike", f"{r['county'].lower()} county", r["tier"].lower()] + r["flags"]
             w.writerow([first, last, r["owner"].title(), r["owner2"].title(),
@@ -95,7 +98,9 @@ def ghl_csv(path: Path, rows: list[dict]) -> None:
                         r["address"], r["city"].title(), r["zip"], r["county"], "LLC Lookalike",
                         r["luc_desc"] or r["luc"], _money(r["market_value"]), r["year_built"] or "",
                         _money(r["sqft"]), r["sale_date"], r["score"], r["tier"], "; ".join(r["flags"]),
-                        r["similar_to"], r["parcel"], r["date_added"], ",".join(tags)])
+                        r["similar_to"], _money(z.get("zestimate")),
+                        f"{_money(z.get('zestimate_low'))}-{_money(z.get('zestimate_high'))}" if z.get("zestimate_low") else "",
+                        r["parcel"], r["date_added"], ",".join(tags)])
 
 
 BUYER_COLUMNS = ["Buyer (LLC)", "Discount Buys", "Total Spent", "Total Market Value", "Avg Price/Value",

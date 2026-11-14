@@ -69,6 +69,9 @@ def load(raw_dir: Path, since: str, files: dict[str, Path] | None = None) -> lis
         if pid in owners:
             orow, ocols = owners[pid]
             of = build.parcel_fields(orow, ocols)
+            # OWNDAT's street / city columns are the owner's MAILING address
+            of["mail_address"] = of["mail_address"] or of["address"]
+            of["mail_city"] = of["mail_city"] or of["city"]
             for k in ("owner", "owner2", "mail_address", "mail_city", "mail_state", "mail_zip", "homestead"):
                 if of[k] not in (None, ""):
                     setattr(p, k, of[k])

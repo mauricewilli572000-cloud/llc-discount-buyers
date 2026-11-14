@@ -9,12 +9,13 @@ from .normalize import clean, iso_date, luc3, num, split_csz, to_int, zip5
 
 
 def address(row: dict, cols: dict) -> str:
-    a = clean(F.pick(row, cols, "address"))
-    if a:
-        return a.split(",")[0].strip()
+    a = clean(F.pick(row, cols, "address")).split(",")[0].strip()
     parts = [clean(F.pick(row, cols, k)) for k in ("addr_no", "addr_dir", "addr_street", "addr_suffix")]
-    parts = [p for p in parts if p and p != "0"]
-    return " ".join(parts)
+    composed = " ".join(p for p in parts if p and p != "0")
+    # a one-line field like Summit's LOCATION is sometimes junk ('OW', 'ME'): prefer the parts then
+    if a and (re.search(r"\d", a) or not composed):
+        return a
+    return composed or a
 
 
 def site_city_zip(row: dict, cols: dict) -> tuple[str, str]:
