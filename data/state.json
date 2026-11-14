@@ -4,38 +4,13 @@
  "max_price_to_value": 0.5,
  "counties": {
   "Franklin": {
-   "status": "ok",
-   "parcels": 442241,
-   "value_factor": 1.0,
-   "lookalikes": 750,
-   "sales_in_window": 14342,
-   "llc_purchases": 3084,
-   "skipped_no_value": 171,
-   "skipped_nominal_price": 1416,
-   "hits": 183
+   "status": "kept from previous run"
   },
   "Cuyahoga": {
-   "status": "ok",
-   "parcels": 424031,
-   "value_factor": 1.0,
-   "lookalikes": 750,
-   "sales_in_window": 18391,
-   "llc_purchases": 4121,
-   "skipped_nominal_price": 1107,
-   "skipped_no_value": 26,
-   "hits": 190
+   "status": "kept from previous run"
   },
   "Hamilton": {
-   "status": "ok",
-   "parcels": 255173,
-   "value_factor": 1.0,
-   "lookalikes": 750,
-   "sales_in_window": 9819,
-   "llc_purchases": 1752,
-   "skipped_nominal_price": 670,
-   "skipped_bundle_unknown": 158,
-   "skipped_no_value": 9,
-   "hits": 46
+   "status": "kept from previous run"
   },
   "Summit": {
    "status": "ok",
@@ -43,20 +18,20 @@
    "value_factor": 1.0,
    "lookalikes": 750,
    "sales_in_window": 7835,
-   "llc_purchases": 1015,
-   "skipped_nominal_price": 288,
+   "llc_purchases": 1011,
+   "skipped_nominal_price": 289,
    "skipped_no_value": 7,
-   "hits": 108
+   "hits": 118
   },
   "Shelby": {
    "status": "disabled",
    "note": "No bulk sales/parcel download published; Auditor site is search-only."
   }
  },
- "hits": 527,
- "new_hits": 2,
+ "hits": 537,
+ "new_hits": 12,
  "lookalikes": 3000,
- "new_lookalikes": 722,
- "buyers": 363,
+ "new_lookalikes": 712,
+ "buyers": 371,
  "zillow_checked": 23
 }
