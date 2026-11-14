@@ -256,5 +256,140 @@
   "year_built": 1933,
   "comp": "406 E 266th St: 3bd/1ba 1080 sf sold $140,000 ~2 mo ago",
   "checked": "2026-11-14"
+ },
+ "Summit|6722931": {
+  "address": "87 N Portage Path, Akron, OH 44303",
+  "zestimate": 329700,
+  "zestimate_low": 290000,
+  "zestimate_high": 366000,
+  "beds": 5,
+  "baths": 3,
+  "sqft": 3400,
+  "year_built": 1916,
+  "comp": "27 Borton Ave: 4bd/3ba 3551 sf sold $378,000 ~3 mo ago",
+  "checked": "2026-11-14",
+  "note": "Zillow matched 87 1/2 N Portage Path - confirm it's the same house"
+ },
+ "Summit|6841682": {
+  "address": "2599 Zesiger Ave, Akron, OH 44312",
+  "zestimate": 228200,
+  "zestimate_low": 203000,
+  "zestimate_high": 251000,
+  "beds": 4,
+  "baths": 2,
+  "sqft": 2494,
+  "year_built": 1958,
+  "comp": "1036 Emma Ave: 4bd/2ba 2678 sf sold $235,000 ~2 mo ago",
+  "checked": "2026-11-14",
+  "note": "Zillow lists it as a double (2599 & 2601)"
+ },
+ "Summit|6836827": {
+  "address": "1780 Cromwell Dr, Akron, OH 44313",
+  "zestimate": 234000,
+  "zestimate_low": 197000,
+  "zestimate_high": 276000,
+  "beds": 3,
+  "baths": 2,
+  "sqft": 1600,
+  "year_built": 1978,
+  "comp": "1720 Wiltshire Rd: 3bd/2ba 1632 sf sold $235,000 ~2 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Summit|6836825": {
+  "address": "1682 Dominion Dr, Akron, OH 44313",
+  "zestimate": 256100,
+  "zestimate_low": 218000,
+  "zestimate_high": 292000,
+  "beds": 6,
+  "baths": 5,
+  "sqft": 3240,
+  "year_built": 1964,
+  "comp": "1753-1757 Cromwell Dr: 5bd/3ba 2632 sf sold $280,000 ~5 mo ago",
+  "checked": "2026-11-14",
+  "note": "Zillow lists it as a double (1682 & 1684)"
+ },
+ "Summit|6836832": {
+  "address": "1762 Cromwell Dr, Akron, OH 44313",
+  "zestimate": null,
+  "note": "Zillow has no Zestimate for this home",
+  "checked": "2026-11-14"
+ },
+ "Summit|6848657": {
+  "address": "1585 Shatto Ave, Akron, OH 44314",
+  "zestimate": null,
+  "note": "Zillow could not find this address",
+  "checked": "2026-11-14"
+ },
+ "Hamilton|5400020023900": {
+  "address": "260 Deephaven Dr, Cincinnati, OH 45238",
+  "zestimate": 244000,
+  "zestimate_low": 217000,
+  "zestimate_high": 268000,
+  "beds": 3,
+  "baths": 2,
+  "sqft": 1722,
+  "year_built": 1951,
+  "comp": "362 Glen Oaks Dr: 3bd/2ba 1685 sf sold $245,500 ~4 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Hamilton|5400072008300": {
+  "address": "552 Picuda Ct, Cincinnati, OH 45238",
+  "zestimate": 260300,
+  "zestimate_low": 237000,
+  "zestimate_high": 281000,
+  "beds": 4,
+  "baths": 2,
+  "sqft": 950,
+  "year_built": 1958,
+  "comp": "5129 Ballantrae Ct: 3bd/2ba 1064 sf sold $250,100 ~4 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Hamilton|2080059024600": {
+  "address": "3026 Westbrook Dr, Cincinnati, OH 45238",
+  "zestimate": 272000,
+  "zestimate_low": 242000,
+  "zestimate_high": 299000,
+  "beds": 3,
+  "baths": 3,
+  "sqft": 1837,
+  "year_built": 1951,
+  "comp": "2853 Werk Rd: 3bd/3ba 2226 sf sold $250,000 ~3 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Hamilton|5400071039600": {
+  "address": "455 Anderson Ferry Rd, Cincinnati, OH 45238",
+  "zestimate": 280500,
+  "zestimate_low": 258000,
+  "zestimate_high": 300000,
+  "beds": 3,
+  "baths": 2,
+  "sqft": 1560,
+  "year_built": 1966,
+  "comp": "454 Palmerston Dr: 3bd/3ba 1518 sf sold $275,000 ~3 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Hamilton|5400013018000": {
+  "address": "448 Kitty Ln, Cincinnati, OH 45238",
+  "zestimate": 237800,
+  "zestimate_low": 205000,
+  "zestimate_high": 266000,
+  "beds": 4,
+  "baths": 1,
+  "sqft": 1320,
+  "year_built": 1952,
+  "comp": "416 Pedretti Ave: 4bd/2ba 1270 sf sold $209,000 ~9 mo ago",
+  "checked": "2026-11-14"
+ },
+ "Hamilton|5400042026800": {
+  "address": "5180 Chantilly Dr, Cincinnati, OH 45238",
+  "zestimate": 222200,
+  "zestimate_low": 196000,
+  "zestimate_high": 244000,
+  "beds": 3,
+  "baths": 1,
+  "sqft": 1414,
+  "year_built": 1956,
+  "comp": "5435 Bonita Dr: 3bd/2ba 1428 sf sold $250,000 23 days ago",
+  "checked": "2026-11-14"
  }
 }
